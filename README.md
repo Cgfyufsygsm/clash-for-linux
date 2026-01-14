@@ -71,14 +71,14 @@
 下载项目
 
 ```bash
-$ git clone https://github.com/wnlen/clash-for-linux.git
+git clone https://github.com/wnlen/clash-for-linux.git
 ```
 
 进入到项目目录，编辑`.env`文件，修改变量`CLASH_URL`的值。
 
 ```bash
-$ cd clash-for-linux
-$ vim .env
+cd clash-for-linux
+vim .env
 ```
 
 > **注意：** `.env` 文件中的变量 `CLASH_SECRET` 为自定义 Clash Secret，值为空时，脚本将自动生成随机字符串。
@@ -94,13 +94,13 @@ $ vim .env
 - 进入项目目录
 
 ```bash
-$ cd clash-for-linux
+cd clash-for-linux
 ```
 
 - 运行启动脚本
 
 ```bash
-$ sudo bash start.sh
+sudo bash start.sh
 
 正在检测订阅地址...
 Clash订阅地址可访问！                                      [  OK  ]
@@ -123,8 +123,8 @@ Secret：xxxxxxxxxxxxx
 ```
 
 ```bash
-$ source /etc/profile.d/clash-for-linux.sh
-$ proxy_on
+source /etc/profile.d/clash-for-linux.sh
+proxy_on
 ```
 
 <br>
@@ -134,28 +134,28 @@ $ proxy_on
 统一管理入口，支持启动/停止/重启/状态/更新/修改订阅：
 
 ```bash
-$ sudo ./clashctl status
-$ sudo ./clashctl start
-$ sudo ./clashctl restart
-$ sudo ./clashctl update
-$ sudo ./clashctl set-url "https://example.com/your-subscribe"
+sudo ./clashctl status
+sudo ./clashctl start
+sudo ./clashctl restart
+sudo ./clashctl update
+sudo ./clashctl set-url "https://example.com/your-subscribe"
 ```
 
 订阅管理（多订阅）：
 
 ```bash
-$ sudo ./clashctl sub add office "https://example.com/office" "User-Agent: ClashforWindows/0.20.39"
-$ sudo ./clashctl sub add personal "https://example.com/personal"
-$ sudo ./clashctl sub list
-$ sudo ./clashctl sub use personal
-$ sudo ./clashctl sub update
-$ sudo ./clashctl sub log
+sudo ./clashctl sub add office "https://example.com/office" "User-Agent: ClashforWindows/0.20.39"
+sudo ./clashctl sub add personal "https://example.com/personal"
+sudo ./clashctl sub list
+sudo ./clashctl sub use personal
+sudo ./clashctl sub update
+sudo ./clashctl sub log
 ```
 
 安装脚本会将 `clashctl` 安装到 `/usr/local/bin/clashctl`，安装后可直接使用：
 
 ```bash
-$ sudo clashctl status
+sudo clashctl status
 ```
 
 <br>
@@ -165,7 +165,7 @@ $ sudo clashctl status
 脚本会自动识别安装路径、创建低权限用户、检测端口冲突，并根据架构自动下载 Clash 内核（可通过 `CLASH_DOWNLOAD_URL_TEMPLATE` 自定义下载地址）。
 
 ```bash
-$ sudo bash install.sh
+sudo bash install.sh
 ```
 
 如需调整安装路径或服务行为，可使用以下环境变量：
@@ -180,13 +180,13 @@ $ sudo bash install.sh
 卸载：
 
 ```bash
-$ sudo bash uninstall.sh
+sudo bash uninstall.sh
 ```
 
 - 检查服务端口
 
 ```bash
-$ netstat -tln | grep -E '9090|789.'
+netstat -tln | grep -E '9090|789.'
 tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN     
 tcp6       0      0 :::7890                 :::*                    LISTEN     
 tcp6       0      0 :::7891                 :::*                    LISTEN     
@@ -196,7 +196,7 @@ tcp6       0      0 :::7892                 :::*                    LISTEN
 - 检查环境变量
 
 ```bash
-$ env | grep -E 'http_proxy|https_proxy'
+env | grep -E 'http_proxy|https_proxy'
 http_proxy=http://127.0.0.1:7890
 https_proxy=http://127.0.0.1:7890
 ```
@@ -215,7 +215,7 @@ https_proxy=http://127.0.0.1:7890
 如需更新订阅并重启，可执行：
 
 ```bash
-$ sudo bash restart.sh --update
+sudo bash restart.sh --update
 ```
 
 ## 更新订阅
@@ -223,13 +223,13 @@ $ sudo bash restart.sh --update
 如只需更新订阅配置但不重启服务，可执行：
 
 ```bash
-$ sudo bash update.sh
+sudo bash update.sh
 ```
 
 如需通过订阅管理更新，可执行：
 
 ```bash
-$ sudo clashctl sub update personal
+sudo clashctl sub update personal
 ```
 
 <br>
@@ -265,20 +265,20 @@ export CLASH_TUN_DNS_HIJACK='any:53'
 - 进入项目目录
 
 ```bash
-$ cd clash-for-linux
+cd clash-for-linux
 ```
 
 - 关闭服务
 
 ```bash
-$ sudo bash shutdown.sh
+sudo bash shutdown.sh
 
 服务关闭成功，请执行以下命令关闭系统代理：proxy_off
 
 ```
 
 ```bash
-$ proxy_off
+proxy_off
 ```
 
 然后检查程序端口、进程以及环境变量`http_proxy|https_proxy`，若都没则说明服务正常关闭。
@@ -290,20 +290,20 @@ $ proxy_off
 推荐使用自动安装脚本生成 systemd 单元（自动识别安装路径、创建低权限用户并修正目录权限）：
 
 ```bash
-$ sudo bash scripts/install_systemd.sh
+sudo bash scripts/install_systemd.sh
 ```
 
 启用并启动服务：
 
 ```bash
-$ sudo systemctl daemon-reload
-$ sudo systemctl enable --now clash-for-linux.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now clash-for-linux.service
 ```
 
 停止服务：
 
 ```bash
-$ sudo systemctl stop clash-for-linux.service
+sudo systemctl stop clash-for-linux.service
 ```
 
 > 如需自定义运行用户，可在执行脚本前设置 `CLASH_SERVICE_USER`（可选 `CLASH_SERVICE_GROUP`）。
