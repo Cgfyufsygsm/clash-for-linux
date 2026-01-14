@@ -48,148 +48,199 @@
  最近更新：**2026-01-13**
 <br>
 
-使用教程
+# 使用教程
 
-推荐路径优先，一键安装即可满足 90% 使用场景。
-手动模式适合调试、二次开发或自定义部署。
+> **推荐路径优先，一键安装即可满足 90% 使用场景。**
+>  手动模式适合调试、二次开发或自定义部署。
 
-🚀 一键安装（推荐）
+------
+
+## 🚀 一键安装（推荐）
+
+```
 git clone --branch master --depth 1 https://github.com/wnlen/clash-for-linux.git
 cd clash-for-linux
 sudo bash install.sh
-
+```
 
 安装脚本将自动完成：
 
-识别系统架构并下载对应 Clash 内核
+- 识别系统架构并下载对应 Clash 内核
+- 创建 systemd 服务（默认启用并启动）
+- 检测并规避端口冲突
+- 安装 `clashctl` 到 `/usr/local/bin`
+- 创建低权限运行用户（默认 `clash`）
 
-创建 systemd 服务（默认启用并启动）
+### 可选安装参数
 
-检测并规避端口冲突
-
-安装 clashctl 到 /usr/local/bin
-
-创建低权限运行用户（默认 clash）
-
-可选安装参数
+```
 CLASH_INSTALL_DIR=/opt/clash-for-linux
 CLASH_SERVICE_USER=clash
 CLASH_ENABLE_SERVICE=true
 CLASH_START_SERVICE=true
 CLASH_AUTO_DOWNLOAD=auto
 CLASH_DOWNLOAD_URL_TEMPLATE=https://github.com/Dreamacro/clash/releases/latest/download/clash-{arch}.gz
+```
 
-⚙️ 配置订阅（必须）
+------
 
-编辑 .env 文件，设置订阅地址：
+## ⚙️ 配置订阅（必须）
 
+编辑 `.env` 文件，设置订阅地址：
+
+```
 vim .env
-
 CLASH_URL=https://example.com/your-subscribe
-
+```
 
 说明：
 
-CLASH_SECRET 为空时将自动生成
+- `CLASH_SECRET` 为空时将自动生成
+- 端口支持设置为 `auto`，自动检测并分配
+- 其它架构可通过 `CLASH_BIN` 指定二进制路径，或命名为 `clash-linux-<arch>`
 
-端口支持设置为 auto，自动检测并分配
+------
 
-其它架构可通过 CLASH_BIN 指定二进制路径，或命名为 clash-linux-<arch>
+## ▶️ 启动与代理设置
 
-▶️ 启动与代理设置
-启动服务（systemd 安装后通常已自动启动）
+### 启动服务（systemd 安装后通常已自动启动）
+
+```
 clashctl status
+```
 
-加载环境变量并开启代理
+### 加载环境变量并开启代理
+
+```
 source /etc/profile.d/clash-for-linux.sh
 proxy_on
-
+```
 
 关闭代理：
 
+```
 proxy_off
+```
 
-🧰 clashctl 管理命令
+------
+
+## 🧰 clashctl 管理命令
 
 统一管理入口（推荐使用）：
 
+```
 clashctl status
 clashctl start
 clashctl restart
 clashctl update
 clashctl set-url "https://example.com/your-subscribe"
+```
 
-多订阅管理
+### 多订阅管理
+
+```
 clashctl sub add office "https://example.com/office"
 clashctl sub add personal "https://example.com/personal"
 clashctl sub list
 clashctl sub use personal
 clashctl sub update
 clashctl sub log
+```
 
-🔄 配置修改与更新
-修改 Clash 配置并重启
+------
+
+## 🔄 配置修改与更新
+
+### 修改 Clash 配置并重启
+
+```
 vim conf/config.yaml
 clashctl restart
+```
 
+> `restart` 不会更新订阅
 
-restart 不会更新订阅
+### 更新订阅
 
-更新订阅
+```
 clashctl update
-
+```
 
 或指定订阅：
 
+```
 clashctl sub update personal
+```
 
-🧩 Mixin 配置（可选）
+------
+
+## 🧩 Mixin 配置（可选）
 
 用于追加或覆盖 Clash 配置。
 
-默认读取：conf/mixin.d/*.yaml（按文件名排序）
+- 默认读取：`conf/mixin.d/*.yaml`（按文件名排序）
+- 也可在 `.env` 中指定：
 
-也可在 .env 中指定：
-
+```
 export CLASH_MIXIN_DIR='conf/mixin.d'
 export CLASH_MIXIN_PATHS='conf/mixin.d/base.yaml,conf/mixin.d/rules.yaml'
+```
 
-🌐 Tun 模式（可选）
+------
 
-需 Clash Meta / Premium 支持，在 .env 中配置：
+## 🌐 Tun 模式（可选）
 
+需 Clash Meta / Premium 支持，在 `.env` 中配置：
+
+```
 export CLASH_TUN_ENABLE=true
 export CLASH_TUN_STACK=system
 export CLASH_TUN_AUTO_ROUTE=true
 export CLASH_TUN_AUTO_REDIRECT=false
 export CLASH_TUN_STRICT_ROUTE=false
 export CLASH_TUN_DNS_HIJACK='any:53'
+```
 
-⛔ 停止服务
+------
+
+## ⛔ 停止服务
+
+```
 clashctl stop
 proxy_off
+```
 
-🔍 状态检查（可选）
+------
+
+## 🔍 状态检查（可选）
 
 端口：
 
+```
 netstat -tln | grep -E '9090|789.'
-
+```
 
 代理环境变量：
 
+```
 env | grep -E 'http_proxy|https_proxy'
+```
 
-🧹 卸载
+------
+
+## 🧹 卸载
+
+```
 sudo bash uninstall.sh
+```
 
-📝 说明（简化保留）
+------
 
-管理面板默认绑定 127.0.0.1:9090
+## 📝 说明
 
-如需对外访问，请自行配置并确保 CLASH_SECRET 足够复杂
-
-默认启用 TLS 校验，不推荐关闭
+- 管理面板默认绑定 `127.0.0.1:9090`
+- 如需对外访问，请自行配置并确保 `CLASH_SECRET` 足够复杂
+- 默认启用 TLS 校验，不推荐关闭
 
 <br>
 
