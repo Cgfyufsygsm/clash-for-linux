@@ -53,14 +53,24 @@ else
   fi
 fi
 
-# 获取 CLASH_SECRET 值：优先 .env；否则尝试读取旧 config；否则生成随机数
+# 获取 CLASH_SECRET 值：优先 .env；其次读取旧 config；占位符视为无效；最后生成随机值
 Secret="${CLASH_SECRET:-}"
+
+# 尝试从旧 config.yaml 读取（仅当 .env 未提供）
 if [ -z "$Secret" ] && [ -f "$Conf_Dir/config.yaml" ]; then
-  Secret="$(awk -F': ' '/^secret:/{print $2; exit}' "$Conf_Dir/config.yaml" || true)"
+  Secret="$(awk -F': *' '/^secret:/{gsub(/"/,"",$2); print $2; exit}' "$Conf_Dir/config.yaml" || true)"
 fi
+
+# 若读取到的是占位符（如 ${CLASH_SECRET}），视为无效
+if [[ "$Secret" =~ ^\$\{.*\}$ ]]; then
+  Secret=""
+fi
+
+# 兜底生成随机 secret
 if [ -z "$Secret" ]; then
   Secret="$(openssl rand -hex 32)"
 fi
+
 
 # 设置默认值
 CLASH_HTTP_PORT="${CLASH_HTTP_PORT:-7890}"
