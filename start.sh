@@ -59,6 +59,9 @@ fi
 # 统一订阅变量
 URL="${CLASH_URL:-}"
 
+# 清理可能的 CRLF（Windows 写 .env 很常见）
+URL="$(printf '%s' "$URL" | tr -d '\r')"
+
 # 只有在“需要在线更新订阅”的模式下才强制要求 URL
 if [ -z "$URL" ] && [ "${SYSTEMD_MODE:-false}" != "true" ]; then
   echo "[ERR] CLASH_URL 为空（未配置订阅地址）"
