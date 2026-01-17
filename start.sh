@@ -429,25 +429,44 @@ if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
     done
   fi
 
-  # --- GUARANTEE: make sure runtime config exists after download ---
   CONFIG_FILE="${CONFIG_FILE:-$Temp_Dir/config.yaml}"
   mkdir -p "$Temp_Dir" || true
 
   if [ "$ReturnStatus" -eq 0 ] && [ -s "$Temp_Dir/clash.yaml" ]; then
-    # 1) 订阅作为完整配置写入运行态 config
-    cp -f "$Temp_Dir/clash.yaml" "$CONFIG_FILE"
+    SRC_YAML="$Temp_Dir/clash.yaml"
 
-    # 2) 强制注入 external-controller / external-ui（运行态兜底）
+    # 1) 判断是否是完整 Clash 配置（关键字段之一存在即可）
+    if grep -qE '^(proxies:|proxy-providers:|rules:|port:|mixed-port:|dns:)' "$SRC_YAML"; then
+      cp -f "$SRC_YAML" "$CONFIG_FILE"
+      echo "[INFO] subscription already is a full clash config"
+    else
+      # 2) 非完整配置：尝试用 subconverter 转换
+      echo "[INFO] subscription is not a full config, try conversion via subconverter..."
+
+      export IN_FILE="$SRC_YAML"
+      export OUT_FILE="$Temp_Dir/clash_converted.yaml"
+
+      set +e
+      bash "$Server_Dir/scripts/clash_profile_conversion.sh"
+      conv_rc=$?
+      set -e
+
+      if [ "$conv_rc" -eq 0 ] && [ -s "$OUT_FILE" ]; then
+        cp -f "$OUT_FILE" "$CONFIG_FILE"
+        echo "[INFO] conversion ok -> runtime config ready"
+      else
+        echo "[WARN] conversion skipped/failed, will keep original and rely on fallback"
+        cp -f "$SRC_YAML" "$CONFIG_FILE"
+      fi
+    fi
+
+    # 3) 强制注入 external-controller / external-ui（运行态兜底）
     force_write_controller_and_ui "$CONFIG_FILE" || true
 
-    # 3) 强制注入 secret
+    # 4) 强制注入 secret
     force_write_secret "$CONFIG_FILE" || true
 
-    # =========================
-    # 配置自检：防止无效订阅导致服务崩溃
-    # - 若新生成的 CONFIG_FILE 非法
-    # - 自动回退到 conf/config.yaml（上一次可用配置）
-    # =========================
+    # 5) 自检：失败则回退到旧配置
     BIN="${Server_Dir}/bin/clash-linux-amd64"
     NEW_CFG="$CONFIG_FILE"
     OLD_CFG="${Conf_Dir}/config.yaml"
