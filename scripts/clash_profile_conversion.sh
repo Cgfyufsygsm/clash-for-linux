@@ -61,11 +61,26 @@ fi
 TMP_OUT="$Temp_Dir/.clash_config.converted.yaml"
 rm -f "$TMP_OUT" 2>/dev/null || true
 
-# 4) 拼接 /sub 参数（尽量通用）
-CONVERT_URL="${SUBCONVERTER_URL}/sub?target=${SUB_TARGET}&url=${SUB_URL}"
-if [ "$SUB_UDP" = "true" ]; then CONVERT_URL="${CONVERT_URL}&udp=true"; fi
-if [ "$SUB_EMOJI" = "true" ]; then CONVERT_URL="${CONVERT_URL}&emoji=true"; fi
-if [ "$SUB_SORT" = "true" ]; then CONVERT_URL="${CONVERT_URL}&sort=true"; fi
+# 4) 调用 subconverter：用 -G + --data-urlencode，避免 url 参数里含 ? & 导致 400
+#    注意：SUB_URL 必须是原始订阅 URL（例如 https://.../subscribe?token=xxx）
+TMP_OUT="${OUT_FILE}.tmp"
+
+set +e
+curl -fsSLG "${SUBCONVERTER_URL}/sub" \
+  --data-urlencode "target=${SUB_TARGET}" \
+  --data-urlencode "url=${SUB_URL}" \
+  -o "${TMP_OUT}"
+rc=$?
+set -e
+
+if [ $rc -ne 0 ] || [ ! -s "${TMP_OUT}" ]; then
+  echo "[WARN] convert failed (rc=${rc}), skip"
+  rm -f "${TMP_OUT}" 2>/dev/null || true
+  exit 0
+fi
+
+mv -f "${TMP_OUT}" "${OUT_FILE}"
+echo "[OK] converted via subconverter -> ${OUT_FILE} (target=${SUB_TARGET})"
 
 # 5) 执行转换（失败则回退）
 set +e

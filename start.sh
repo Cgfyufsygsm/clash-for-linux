@@ -443,6 +443,27 @@ if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
     # 3) 强制注入 secret
     force_write_secret "$CONFIG_FILE" || true
 
+    # =========================
+    # 配置自检：防止无效订阅导致服务崩溃
+    # - 若新生成的 CONFIG_FILE 非法
+    # - 自动回退到 conf/config.yaml（上一次可用配置）
+    # =========================
+    BIN="${Server_Dir}/bin/clash-linux-amd64"
+    NEW_CFG="$CONFIG_FILE"
+    OLD_CFG="${Conf_Dir}/config.yaml"
+
+    if [ -x "$BIN" ] && [ -f "$NEW_CFG" ]; then
+      if ! "$BIN" -t -f "$NEW_CFG" >/dev/null 2>&1; then
+        echo "[ERROR] Generated config invalid, fallback to last good config: $OLD_CFG" >&2
+        if [ -f "$OLD_CFG" ]; then
+          cp -f "$OLD_CFG" "$NEW_CFG"
+        else
+          echo "[FATAL] No valid config available, aborting startup" >&2
+          exit 1
+        fi
+      fi
+    fi
+
     echo "[INFO] Runtime config generated: $CONFIG_FILE (size=$(wc -c <"$CONFIG_FILE" 2>/dev/null || echo 0))"
   else
     echo "[WARN] Download did not produce clash.yaml (rc=$ReturnStatus), skip runtime config generation" >&2
