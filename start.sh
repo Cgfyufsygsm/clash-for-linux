@@ -268,6 +268,44 @@ if_success() {
   fi
 }
 
+ensure_subconverter() {
+  local bin="${Server_Dir}/tools/subconverter/subconverter"
+  local port="25500"
+
+  # 没有二进制直接跳过
+  if [ ! -x "$bin" ]; then
+    echo "[WARN] subconverter bin not found: $bin"
+    export SUBCONVERTER_READY="false"
+    return 0
+  fi
+
+  # 已在监听则认为就绪
+  if ss -lntp 2>/dev/null | grep -qE ":${port}[[:space:]]"; then
+    export SUBCONVERTER_URL="${SUBCONVERTER_URL:-http://127.0.0.1:${port}}"
+    export SUBCONVERTER_READY="true"
+    return 0
+  fi
+
+  # 启动（后台）
+  echo "[INFO] starting subconverter..."
+  (cd "${Server_Dir}/tools/subconverter" && nohup "./subconverter" >/dev/null 2>&1 &)
+
+  # 等待端口起来
+  for _ in 1 2 3 4 5; do
+    sleep 1
+    if ss -lntp 2>/dev/null | grep -qE ":${port}[[:space:]]"; then
+      export SUBCONVERTER_URL="${SUBCONVERTER_URL:-http://127.0.0.1:${port}}"
+      export SUBCONVERTER_READY="true"
+      echo "[OK] subconverter ready at ${SUBCONVERTER_URL}"
+      return 0
+    fi
+  done
+
+  echo "[WARN] subconverter start failed or port not ready"
+  export SUBCONVERTER_READY="false"
+  return 0
+}
+
 #################### 任务执行 ####################
 
 ## 获取CPU架构信息
@@ -372,6 +410,7 @@ fi
 
 #################### 下载订阅并生成 config.yaml（非兜底路径） ####################
 if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
+  ensure_subconverter || true
   echo -e '\n正在下载Clash配置文件...'
   Text3="配置文件clash.yaml下载成功！"
   Text4="配置文件clash.yaml下载失败！"
