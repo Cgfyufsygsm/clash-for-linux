@@ -103,7 +103,7 @@ Secret="${CLASH_SECRET:-}"
 
 # 尝试从旧 config.yaml 读取（仅当 .env 未提供）
 if [ -z "$Secret" ] && [ -f "$Conf_Dir/config.yaml" ]; then
-  Secret="$(awk -F': *' '/^secret:/{gsub(/"/,"",$2); print $2; exit}' "$Conf_Dir/config.yaml" || true)"
+  Secret="$(awk -F': *' '/^[[:space:]]*secret[[:space:]]*:/{print $2; exit}' "$Conf_Dir/config.yaml" 2>/dev/null | tr -d '"' || true)"
 fi
 
 # 若读取到的是占位符（如 ${CLASH_SECRET}），视为无效
