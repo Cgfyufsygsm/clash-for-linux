@@ -524,11 +524,16 @@ if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
 
     echo "[INFO] Runtime config generated: $CONFIG_FILE (size=$(wc -c <"$CONFIG_FILE" 2>/dev/null || echo 0))"
 
-    # Optional: Fix group test URLs to HTTPS for reliability (safe, narrow scope)
+    # Optional: Fix test URLs to HTTPS for reliability (safe, narrow scope)
     if [ "${FIX_TEST_URL_HTTPS:-true}" = "true" ] && [ -s "$CONFIG_FILE" ]; then
-      # only replace " url: 'http://...'" or 'url: "http://..."' patterns
+      # 1) proxy-groups url-test / fallback url
       sed -i -E \
         "s#(url:[[:space:]]*['\"])http://#\1https://#g" \
+        "$CONFIG_FILE" 2>/dev/null || true
+
+      # 2) cfw-latency-url (used by some dashboards / generators)
+      sed -i -E \
+        "s#(cfw-latency-url:[[:space:]]*['\"])http://#\1https://#g" \
         "$CONFIG_FILE" 2>/dev/null || true
     fi
   else
