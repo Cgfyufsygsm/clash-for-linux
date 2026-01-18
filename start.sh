@@ -517,22 +517,25 @@ if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
       sed -i -E "s#(health-check:[[:space:]]*\n[[:space:]]*url:[[:space:]]*['\"])http://#\1https://#g" "$CONFIG_FILE" 2>/dev/null || true
     fi
 
-    # 5) 自检：失败则回退到旧配置
+    # 5) 自检：失败则回退到旧配置（注意：脚本 set -e + trap ERR，必须 set +e 包裹）
     BIN="${Server_Dir}/bin/clash-linux-amd64"
     NEW_CFG="$CONFIG_FILE"
     OLD_CFG="${Conf_Dir}/config.yaml"
+    TEST_OUT="$Temp_Dir/config.test.out"
 
     if [ -x "$BIN" ] && [ -f "$NEW_CFG" ]; then
-      TEST_OUT="$Temp_Dir/config.test.out"
-      : > "$TEST_OUT"
+      : >"$TEST_OUT"
+
+      set +e
       "$BIN" -t -f "$NEW_CFG" >"$TEST_OUT" 2>&1
       test_rc=$?
+      set -e
 
       if [ $test_rc -ne 0 ]; then
-        echo "[ERROR] Generated config invalid, rc=$test_rc, reason (tail 200):" >&2
+        echo "[ERROR] Generated config invalid, rc=$test_rc, reason(file=$TEST_OUT, size=$(wc -c <"$TEST_OUT" 2>/dev/null || echo 0))" >&2
         tail -n 200 "$TEST_OUT" >&2
 
-        echo "[ERROR] Generated config invalid, fallback to last good config: $OLD_CFG" >&2
+        echo "[ERROR] fallback to last good config: $OLD_CFG" >&2
         if [ -f "$OLD_CFG" ]; then
           cp -f "$OLD_CFG" "$NEW_CFG"
         else
