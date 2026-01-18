@@ -523,11 +523,14 @@ if [ "$SKIP_CONFIG_REBUILD" != "true" ]; then
     OLD_CFG="${Conf_Dir}/config.yaml"
 
     if [ -x "$BIN" ] && [ -f "$NEW_CFG" ]; then
-      TEST_ERR="$Temp_Dir/config.test.err"
-      : > "$TEST_ERR"
-      if ! "$BIN" -t -f "$NEW_CFG" >/dev/null 2>"$TEST_ERR"; then
-        echo "[ERROR] Generated config invalid, reason (tail 120):" >&2
-        tail -n 120 "$TEST_ERR" >&2
+      TEST_OUT="$Temp_Dir/config.test.out"
+      : > "$TEST_OUT"
+      "$BIN" -t -f "$NEW_CFG" >"$TEST_OUT" 2>&1
+      test_rc=$?
+
+      if [ $test_rc -ne 0 ]; then
+        echo "[ERROR] Generated config invalid, rc=$test_rc, reason (tail 200):" >&2
+        tail -n 200 "$TEST_OUT" >&2
 
         echo "[ERROR] Generated config invalid, fallback to last good config: $OLD_CFG" >&2
         if [ -f "$OLD_CFG" ]; then
